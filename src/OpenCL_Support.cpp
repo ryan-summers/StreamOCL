@@ -86,7 +86,7 @@ void OpenCL_Data::queryPlatforms()
 	//OpenCL Parameters
 	cl_int err;
 	cl_uint ret;
-	cl_platformId platformIDs[20];
+	cl_platform_id platformIDs[20];
 
 	//Buffer Information
 	size_t buffer_used;
@@ -102,15 +102,15 @@ void OpenCL_Data::queryPlatforms()
 	{
 		cout << endl << endl << "Platform " <<i << ": " << endl << endl;
 		//query the information about the platform
-		clGetPlatformInfo(platformIDs[iterator], CL_PLATFORM_NAME, sizeof(buffer), buffer, &buffer_used);
+		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, &buffer_used);
 		cout << "Name: \t" << buffer << endl;
-		clGetPlatformInfo(platformIDs[iterator], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, &buffer_used);
+		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, &buffer_used);
 		cout << "Vendor: \t" << buffer << endl;
-		clGetPlatformInfo(platformIDs[iterator], CL_PLATFORM_VERSION, sizeof(buffer), buffer, &buffer_used);
-		cout <<("Version: \t" << buffer << endl;
-		clGetPlatformInfo(platformIDs[iterator], CL_PLATFORM_EXTENSIONS, sizeof(buffer), buffer, &buffer_used);
-		cout <<("Extensions: \t" << buffer << endl;
-		clGetPlatformInfo(platformIDs[iterator], CL_PLATFORM_PROFILE, sizeof(buffer), buffer, &buffer_used);
+		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, &buffer_used);
+		cout << "Version: \t" << buffer << endl;
+		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_EXTENSIONS, sizeof(buffer), buffer, &buffer_used);
+		cout << "Extensions: \t" << buffer << endl;
+		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_PROFILE, sizeof(buffer), buffer, &buffer_used);
 		cout << "Profile: " << buffer << endl;
 		cout << "---------------" << endl << endl;
 	}
@@ -127,7 +127,7 @@ void OpenCL_Data::queryDevices()
 	size_t buffer_used;
 	
 	//Get all the available devices on the platform
-	err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 20, deviceIDs, &ret);
+	err = clGetDeviceIDs(this->platformID, CL_DEVICE_TYPE_ALL, 20, deviceIDs, &ret);
 	printf("\nFound %d devices. \n", ret);
 	printf("---------------\n\n");
 	
@@ -143,33 +143,33 @@ void OpenCL_Data::queryDevices()
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_VENDOR, sizeof(buffer), buffer, &buffer_used);
 			printf("Vendor: \t%.*s\n", buffer_used, buffer);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_VENDOR_ID, sizeof(buffer), buffer, &buffer_used);
-			printf("Vendor ID: \t%d\n", (cl_uint *)buffer[0]);
+			printf("Vendor ID: \t%d\n", ((cl_uint *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_VERSION, sizeof(buffer), buffer, &buffer_used);
 			printf("Device Version: \t%.*s\n", buffer_used, buffer);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_AVAILABLE, sizeof(buffer), buffer, &buffer_used);
-			printf("Device Available: \t%d\n", (int *)buffer[0]);
+			printf("Device Available: \t%d\n", ((int *)buffer)[0]);
 		//	clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, &buffer_used);
 		//	printf("Extensions: \t%.*s\n", buffer_used, buffer);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Global Memory Cache (bytes): \t%d\n", (cl_ulong *)buffer[0]);
+			printf("Global Memory Cache (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Global Memory Size (bytes): \t%d\n", (cl_ulong *)buffer[0]);
+			printf("Global Memory Size (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Memory Alloc (bytes): \t%d\n", (cl_ulong *)buffer[0]);
+			printf("Maximum Memory Alloc (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Clock (MHz): \t%d\n", (cl_uint *)buffer[0]);
+			printf("Maximum Clock (MHz): \t%d\n", ((cl_uint *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(buffer), buffer, &buffer_used);
-			printf("Max Compute Units: \t%d\n", (cl_uint *)buffer[0]);
+			printf("Max Compute Units: \t%d\n", ((cl_uint *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_PARAMETER_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Parameter Size (bytes): \t%d\n", (size_t *)buffer[0]);
+			printf("Maximum Parameter Size (bytes): \t%d\n", ((size_t *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_LOCAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Local Memory Size (bytes): \t%d\n", (cl_ulong *)buffer[0]);
+			printf("Maximum Local Memory Size (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_LOCAL_MEM_TYPE, sizeof(buffer), buffer, &buffer_used);
-			printf("Local Memory Type: \t%.*s\n", (cl_device_local_mem_type *)buffer[0]);
+			printf("Local Memory Type: \t%.*s\n", ((cl_device_local_mem_type *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Work Group Size: \t%d\n", (size_t *)buffer[0]);
+			printf("Maximum Work Group Size: \t%d\n", ((size_t *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Constant Buffer Size (bytes): \t%d\n", (cl_ulong *) buffer[0]);
+			printf("Maximum Constant Buffer Size (bytes): \t%d\n", ((cl_ulong *) buffer)[0]);
 	
 			printf("\n~~~\n");
 		} 
@@ -211,8 +211,9 @@ void OpenCL_Data::setDeviceID(int index)
 {
 	cl_int error;
 	cl_uint num_devices;
+	cl_device_id deviceIDs[20];
 
-	error = clGetDeviceIDs(this->platformID, CL_DEVICE_TYPE_ALL, 20, deviceIDs, num_devices);
+	error = clGetDeviceIDs(this->platformID, CL_DEVICE_TYPE_ALL, 20, deviceIDs, &num_devices);
 
 	if (error != CL_SUCCESS)
 	{
@@ -232,9 +233,9 @@ void OpenCL_Data::setDeviceID(int index)
 	}
 }
 
-void OpenCL_Data::queryAllDvices()
+void OpenCL_Data::queryAllDevices()
 {
-i	//Create a temporary variable to hold the platform ID
+	//Create a temporary variable to hold the platform ID
 	cl_platform_id holder = this->platformID;
 	
 	cl_int error;
@@ -262,23 +263,23 @@ void OpenCL_Data::queryMemoryInfo()
 
 	//Display Global Memory information
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
-	printf("Global Memory Size (bytes): \t%d\n", (cl_ulong *)buffer[0]);
+	printf("Global Memory Size (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
 	
 	//Display Global Memory Cache Info
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(buffer), buffer, &buffer_used);
-	printf("Global Memory Cache (bytes): \t%d\n", (cl_ulong *)buffer[0]);
+	printf("Global Memory Cache (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, sizeof(buffer), buffer, &buffer_used);
-	printf("Global Memory Cache Type: \t%d\n", (cl_device_mem_cache_type *)buffer[0];
+	printf("Global Memory Cache Type: \t%d\n", ((cl_device_mem_cache_type *)buffer)[0]);
 
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(buffer), buffer, &buffer_used);
-	printf("Maximum Memory Alloc (bytes): \t%d\n", (cl_ulong *)buffer[0]);
+	printf("Maximum Memory Alloc (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
 		
 
 	//Display Local Memory information
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
-	printf("Maximum Local Memory Size (bytes): \t%d\n", (cl_ulong *)buffer[0]);
+	printf("Maximum Local Memory Size (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_LOCAL_MEM_TYPE, sizeof(buffer), buffer, &buffer_used);
-	printf("Local Memory Type: \t%.*s\n", (cl_device_local_mem_type *)buffer[0]);
+	printf("Local Memory Type: \t%.*s\n", ((cl_device_local_mem_type *)buffer)[0]);
 
 }
 
@@ -307,7 +308,7 @@ void OpenCL_Data::initialize()
 }
 
 //Configure the device program from the specified kernelFile and the functionName
-void OpenCL_Data::setProgram(String kernelFileName, String functionName)
+void OpenCL_Data::setProgram(string kernelFileName, string functionName)
 {
 	size_t srcKernelLength = 0; 
 	FILE *kernelFile = NULL;
@@ -334,7 +335,8 @@ void OpenCL_Data::setProgram(String kernelFileName, String functionName)
 		fclose(kernelFile);
 	
 		//create the program with the source code in the kernel file
-		this->program = clCreateProgramWithSource(this->context, 1, (const char **)&(kernelFileName.c_str()), &srcKernelLength, &err_code);
+		const char * str = kernelFileName.c_str();
+		this->program = clCreateProgramWithSource(this->context, 1, (const char **)&str, &srcKernelLength, &err_code);
 		if (err_code != CL_SUCCESS) {
 			free(kernelString);
 			cout << "Error. Failed to create program from source. CL Error: " << err_code << endl;
@@ -347,10 +349,10 @@ void OpenCL_Data::setProgram(String kernelFileName, String functionName)
 				cout << "Error. Could not build program. CL Error: " << err_code << endl;
 				size_t length;
 				char *buffer;
-				clGetProgramBuildInfo(gpu->program, gpu->deviceID, CL_PROGRAM_BUILD_LOG, 0, NULL, &length);
+				clGetProgramBuildInfo(this->program, this->deviceID, CL_PROGRAM_BUILD_LOG, 0, NULL, &length);
 				buffer = (char *)malloc(length);
 				cout << endl << "Build Log Information" << endl;
-				clGetProgramBuildInfo(gpu->program, gpu->deviceID, CL_PROGRAM_BUILD_LOG, length, buffer, NULL);
+				clGetProgramBuildInfo(this->program, this->deviceID, CL_PROGRAM_BUILD_LOG, length, buffer, NULL);
 				cout << buffer;
 				free(buffer);
 				free(kernelString);
@@ -374,7 +376,7 @@ void OpenCL_Data::setKernelArgument(int argIndex, void *argument, size_t argumen
 {
 	//Add the kernel argument to the vector. Construct an object
 	OpenCL_Argument arg = {0};
-	arg.argumentIndex = arg;
+	arg.argumentIndex = argIndex;
 	arg.argument = argument;
 	arg.argumentSize = argumentSize;
 	arg.io = io;
@@ -404,7 +406,7 @@ void OpenCL_Data::setKernelArgument(OpenCL_Argument argument)
 	//ensure the argument index does not yet exist 
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
-		if (this->arguments.at(i).argumentIndex == argIndex)
+		if (this->arguments.at(i).argumentIndex == argument.argumentIndex)
 		{
 			cout << "Error. Argument already specified. Please use updateKernelArgument(). " << endl;
 			flag = 1;
@@ -445,7 +447,7 @@ void OpenCL_Data::updateKernelArgument(OpenCL_Argument argument)
 	//Search for the argument in the vector
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
-		if (this->arguments.at(i).argumentIndex == argIndex)
+		if (this->arguments.at(i).argumentIndex == argument.argumentIndex)
 		{
 			flag = 1;
 			this->arguments.at(i) = argument;
@@ -468,7 +470,7 @@ void OpenCL_Data::removeKernelArgument(int argIndex)
 		{
 			//Remove the Argument from the vector
 			//First, release the buffer object if it exists
-			if (cl_mem != NULL)
+			if (this->arguments.at(i).buffer != NULL)
 			{
 				ret = clReleaseMemObject(this->arguments.at(i).buffer);
 				if (ret != CL_SUCCESS)
@@ -504,7 +506,7 @@ void OpenCL_Data::writeBuffers()
 	//Copy all the data specified by the arguments into the respective openCL Buffers
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
-		ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, NULL, NULL, NULL);
+		ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
 		if (ret != CL_SUCCESS)
 			cout << "Error. Failed to enqueue write of argument " << i <<". CL Error: " << ret << endl;
 
@@ -515,11 +517,12 @@ void OpenCL_Data::writeBuffers()
 //This will read results from the device into any buffer objects that have OUTPUT or INOUT status
 void OpenCL_Data::readResults()
 {
+	cl_int ret;
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
 		if (this->arguments.at(i).io == OUTPUT || this->arguments.at(i).io == INOUT)
 		{
-			ret = clEnqueueReadBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argment, NULL, NULL, NULL);
+			ret = clEnqueueReadBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
 		}
 	}
 }
@@ -581,7 +584,7 @@ void OpenCL_Data::initializeBuffers()
 	}
 	
 	if (flag)
-		cout << "Failed to set " << i << " arguments." << endl;
+		cout << "Failed to set " << flag << " arguments." << endl;
 
 }
 
@@ -590,7 +593,7 @@ void OpenCL_Data::start(int globalWorkSize, int localWorkSize)
 {
 	cl_int ret;
 
-	ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, 1, NULL, (size_t *)&globalWorkSize, (size_t localWorkSize), NULL, NULL, NULL);
+	ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, 1, NULL, (size_t *)&globalWorkSize, (size_t *)&localWorkSize, 0, NULL, NULL);
 	if (ret != CL_SUCCESS)
 		cout << "Error. Could not begin program execution. CL Error: " << ret << endl;
 }

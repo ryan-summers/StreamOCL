@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <CL/cl.h> //The main OpenCL Header file
+#include <vector>
+#include <stdio.h>
 
 typedef enum {
 	INPUT,
@@ -23,9 +25,14 @@ typedef struct {
 	OpenCL_IO io;
 	OpenCL_MemType memType;
 	cl_mem buffer;
-} OpenCL_Argument
+} OpenCL_Argument;
 
-public OpenCL_Data {
+using std::string;
+using std::cout;
+using std::endl;
+using std::vector;
+
+class OpenCL_Data {
 	public:
 		OpenCL_Data(); 					//Default Constructor
 		OpenCL_Data(OpenCL_Data &data); //Copy Constructor
@@ -40,9 +47,9 @@ public OpenCL_Data {
 		void setDeviceID(int index);	//This will set the device ID to the index specified
 
 		void initialize(); 				//This function creates the command queue and context for the specified device ID
-		void start();					//Start program execution on the device
+		void start(int globalWorkSize, int localWorkSize);					//Start program execution on the device
 										//This will also create all buffers on the device for use.
-		void setProgram(String kernelFileName); //This function will set the openCL program from the file specified
+		void setProgram(string kernelFileName, string functionName); //This function will set the openCL program from the file specified
 		void setKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType); //Set a Kernel Argument
 		void setKernelArgument(OpenCL_Argument arg); 	//Set the Argument specified by Index
 		void updateKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType);	//Update the Argument specified by argIndex
