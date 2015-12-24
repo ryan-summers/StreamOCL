@@ -23,11 +23,19 @@ CC=g++
 LCC=ar
 LCFLAGS=rvs
 
-default: OpenCL_Support.o
-	$(LCC) $(LCFLAGS) $(BUILD_DIR)libOpenCL_Support.a $(BUILD_DIR)$^
+Example.exe : Example.o libOpenCL_Support.a
+	$(CC) $(CFLAGS) $(BUILD_DIR)Example.o $(BUILD_DIR)libOpenCL_Support.a -o $(BUILD_DIR)$@ -l$(OPENCL_LIB_NAME) 
 
-OpenCL_Support.o: 
-	$(CC) $(CFLAGS) -c $(SRC_DIR)OpenCL_Support.cpp -o $(BUILD_DIR)$@ -l$(OPENCL_LIB_NAME)
+libOpenCL_Support.a : OpenCL_Support.o
+	$(LCC) $(LCFLAGS) $(BUILD_DIR)$@ $(BUILD_DIR)$^
+
+OpenCL_Support.o: $(SRC_DIR)OpenCL_Support.cpp
+	$(CC) $(CFLAGS) -c $^ -o $(BUILD_DIR)$@ -l$(OPENCL_LIB_NAME)
 
 $(shell mkdir -p $(BUILD_DIR))
 
+Example.o : $(SRC_DIR)Example.cpp
+	$(CC) $(CFLAGS) -c $^ -o $(BUILD_DIR)$@
+
+clean :
+	 rm $(BUILD_DIR)*.o $(BUILD_DIR)*.a
