@@ -1,4 +1,4 @@
-#include "OpenCL_Support.hpp"
+#include "StreamOCL.hpp"
 //Default constructor for the OpenCL Class
 OpenCL_Data::OpenCL_Data() 
 {
@@ -97,13 +97,14 @@ void OpenCL_Data::queryPlatforms()
 	
 	
 	//Print out Platform info
-	cout << "---------------" << endl << "Found " << (int)ret << " platforms!" << endl << "---------------" << endl;
+	cout << "Found " << (int)ret << " platforms!" << endl << "-------------------" << endl;
 	for (int i = 0; i < ret; i++)
 	{
-		cout << endl << endl << "Platform " <<i << ": " << endl << endl;
+		cout << endl << endl << " Platform " << i << endl;
+		cout << " -----------" << endl << endl;
 		//query the information about the platform
 		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, &buffer_used);
-		cout << "Name: \t" << buffer << endl;
+		cout << "Name: \t\t" << buffer << endl;
 		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, &buffer_used);
 		cout << "Vendor: \t" << buffer << endl;
 		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, &buffer_used);
@@ -111,8 +112,8 @@ void OpenCL_Data::queryPlatforms()
 		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_EXTENSIONS, sizeof(buffer), buffer, &buffer_used);
 		cout << "Extensions: \t" << buffer << endl;
 		clGetPlatformInfo(platformIDs[i], CL_PLATFORM_PROFILE, sizeof(buffer), buffer, &buffer_used);
-		cout << "Profile: " << buffer << endl;
-		cout << "---------------" << endl << endl;
+		cout << "Profile: \t" << buffer << endl;
+		cout << endl << "---------------" << endl << endl;
 	}
 }	
 
@@ -140,39 +141,39 @@ void OpenCL_Data::queryDevices()
 			printf("\nDevice %d: \n", iterator);
 			cout << "---------" << endl << endl;
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_NAME, sizeof(buffer), buffer, &buffer_used);
-			printf("Name: \t\t\t\t\t%.*s\n", buffer_used, buffer);
+			printf("Name: \t\t\t%.*s\n", buffer_used, buffer);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_VENDOR, sizeof(buffer), buffer, &buffer_used);
-			printf("Vendor: \t\t\t\t%.*s\n", buffer_used, buffer);
+			printf("Vendor: \t\t%.*s\n", buffer_used, buffer);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_VENDOR_ID, sizeof(buffer), buffer, &buffer_used);
-			printf("Vendor ID: \t\t\t\t%d\n", ((cl_uint *)buffer)[0]);
+			printf("Vendor ID: \t\t%d\n", ((cl_uint *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_VERSION, sizeof(buffer), buffer, &buffer_used);
-			printf("Device Version: \t\t\t%.*s\n", buffer_used, buffer);
+			printf("Device Version: \t%.*s\n", buffer_used, buffer);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_AVAILABLE, sizeof(buffer), buffer, &buffer_used);
-			printf("Device Available: \t\t\t%d\n", ((int *)buffer)[0]);
-		//	clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, &buffer_used);
-		//	printf("Extensions: \t%.*s\n", buffer_used, buffer);
-			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Global Memory Cache (bytes): \t\t%d\n", ((cl_ulong *)buffer)[0]);
-			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Global Memory Size (bytes): \t\t%d\n", ((cl_ulong *)buffer)[0]);
-			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Memory Alloc (bytes): \t\t%d\n", ((unsigned long *)buffer)[0]);
+			printf("Device Available: \t%d\n", ((int *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Clock (MHz): \t\t\t%d\n", ((cl_uint *)buffer)[0]);
+			printf("Maximum Clock (MHz): \t%d\n", ((cl_uint *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(buffer), buffer, &buffer_used);
-			printf("Max Compute Units: \t\t\t%d\n", ((cl_uint *)buffer)[0]);
-			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_PARAMETER_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Parameter Size (bytes): \t%d\n", ((size_t *)buffer)[0]);
-			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_LOCAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Local Memory Size (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
-			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_LOCAL_MEM_TYPE, sizeof(buffer), buffer, &buffer_used);
-			printf("Local Memory Type: \t\t\t%d\n", ((cl_device_local_mem_type *)buffer)[0]);
+			printf("Max Compute Units: \t%d\n", ((cl_uint *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Work Group Size: \t\t%d\n", ((size_t *)buffer)[0]);
+			printf("Max Work Group Size: \t%d\n", ((size_t *)buffer)[0]);
+			
+			//Memory info
+			cout << endl << "Memory Information: (All sizes in Bytes): " << endl;
+			cout << "----------------------------------------" << endl;
+			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
+			printf("Global Size: \t\t%d\n", ((cl_ulong *)buffer)[0]);
+			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(buffer), buffer, &buffer_used);
+			printf("Global Cache Size: \t%d\n", ((cl_ulong *)buffer)[0]);
+			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(buffer), buffer, &buffer_used);
+			printf("Max Allocation: \t%d\n", ((unsigned long *)buffer)[0]);
+			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_PARAMETER_SIZE, sizeof(buffer), buffer, &buffer_used);
+			printf("Maxi Param Size: \t%d\n", ((size_t *)buffer)[0]);
+			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_LOCAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
+			printf("Local Size: \t\t%d\n", ((cl_ulong *)buffer)[0]);
+			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_LOCAL_MEM_TYPE, sizeof(buffer), buffer, &buffer_used);
+			printf("Local Type: \t\t%d\n", ((cl_device_local_mem_type *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Maximum Constant Buffer Size (bytes): \t%d\n", ((cl_ulong *) buffer)[0]);
-	
-			printf("\n~~~\n");
+			printf("Max Const Buffer: \t%d\n\n", ((cl_ulong *) buffer)[0]);
 		} 
 	}
 
@@ -251,10 +252,9 @@ void OpenCL_Data::queryAllDevices()
 		//Set the platform ID
 		this->platformID = platformIDs[i];
 		cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
-		cout << "Querying devices for platform " << i << "." << endl << endl;
+		cout << "Querying devices for platform " << i << "." << endl;
 		cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
 		this->queryDevices();
-		cout << "---------------" << endl << endl;
 	}
 }
 

@@ -23,13 +23,13 @@ CC=g++
 LCC=ar
 LCFLAGS=rvs
 
-Example.exe : Example.o libOpenCL_Support.a
-	$(CC) $(CFLAGS) $(BUILD_DIR)Example.o $(BUILD_DIR)libOpenCL_Support.a -o $(BUILD_DIR)$@ -l$(OPENCL_LIB_NAME) 
+Example.exe : Example.o libStreamOCL.a
+	$(CC) $(CFLAGS) $(BUILD_DIR)Example.o $(BUILD_DIR)libStreamOCL.a -o $(BUILD_DIR)$@ -l$(OPENCL_LIB_NAME) 
 
-libOpenCL_Support.a : OpenCL_Support.o
+libStreamOCL.a : StreamOCL.o
 	$(LCC) $(LCFLAGS) $(BUILD_DIR)$@ $(BUILD_DIR)$^
 
-OpenCL_Support.o: $(SRC_DIR)OpenCL_Support.cpp
+StreamOCL.o: $(SRC_DIR)StreamOCL.cpp
 	$(CC) $(CFLAGS) -c $^ -o $(BUILD_DIR)$@ -l$(OPENCL_LIB_NAME)
 
 $(shell mkdir -p $(BUILD_DIR))
