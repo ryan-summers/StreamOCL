@@ -1,10 +1,10 @@
-## OpenCL-Support
+## StreamOCL
 This library provides functions written in C++ for supporting OpenCL. 
 The purpose of this library is to provide simple functions to query OpenCL devices and display information about them. 
 Additionally, this library provides functions to establish openCL device contexts, associate kernel files with them, write inputs, and memory management of OpenCL parameters.
 
 ### Library Contents:
- - `OpenCL_Data` Class: The `OpenCL_Data` Class contains all information associated with an OpenCL Program. An object of the OpenCL_Data Class contains a platform ID, a device ID, a kernel program, and buffers.
+ - `OpenCL_Data` Class: The `OpenCL_Data` Class contains all information associated with an OpenCL Program. An object of the `OpenCL_Data` Class contains a platform ID, a device ID, a kernel program, and buffers.
 
 ### Library Use:
 
