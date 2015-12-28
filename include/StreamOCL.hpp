@@ -69,7 +69,7 @@ class OpenCL_Data {
 		void setDeviceID(int index);	//This will set the device ID to the index specified
 
 		void initialize(); 				//This function creates the command queue and context for the specified device ID
-		void start(int globalWorkSize, int localWorkSize);					//Start program execution on the device
+		void start(size_t globalWorkSize, size_t localWorkSize);					//Start program execution on the device
 										//This will also create all buffers on the device for use.
 		void setProgram(string kernelFileName, string functionName); //This function will set the openCL program from the file specified
 		void setKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType); //Set a Kernel Argument
@@ -80,8 +80,6 @@ class OpenCL_Data {
 		OpenCL_Argument getKernelArgument(int argIndex); 	//Get the specified Argument
 		void writeBuffers();			//Write all Kernel Argument Buffers to the device
 		void readResults();				//Read results from the GPU into the specified IO buffer
-
-	protected:
 		void initializeBuffers();		//Initialize the OpenCL Buffers specified by Arguments
 	
 	private:

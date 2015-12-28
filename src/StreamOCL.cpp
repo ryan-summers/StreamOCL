@@ -52,6 +52,7 @@ OpenCL_Data::~OpenCL_Data()
 		if (ret != CL_SUCCESS)
 			cout << "Error. Could not flush command queue. CL Error: " << ret << endl;
 		ret =clFinish(this->commandQueue);
+		if (ret != CL_SUCCESS)
 			cout << "Error. Could not finish command queue. CL Error: " << ret << endl;
 	}
 
@@ -310,20 +311,21 @@ void OpenCL_Data::initialize()
 {
 
 	cl_int ret;
-	this->context = clCreateContext(NULL, 1, &(this->deviceID), NULL, NULL, &ret);
-	if (ret != CL_SUCCESS)
+	if (this->context == NULL)
 	{
-		cout << "Error. Failed to establish a context. CL Error: " << ret << endl;
-	}
-	else
-	{
-		this->commandQueue = clCreateCommandQueue(this->context, this->deviceID, 0, &ret);
+		this->context = clCreateContext(NULL, 1, &(this->deviceID), NULL, NULL, &ret);
 		if (ret != CL_SUCCESS)
-			cout << "Error. Failed to create the command queue. CL Error: " << ret << endl;
+		{
+			cout << "Error. Failed to establish a context. CL Error: " << ret << endl;
+		}
 		else
 		{
-			//Else, initializeBuffers
-			this->initializeBuffers();	
+			if (this->commandQueue == NULL) 
+			{
+				this->commandQueue = clCreateCommandQueue(this->context, this->deviceID, 0, &ret);
+				if (ret != CL_SUCCESS)
+					cout << "Error. Failed to create the command queue. CL Error: " << ret << endl;
+			}
 		}
 	}
 	
@@ -332,6 +334,9 @@ void OpenCL_Data::initialize()
 //Configure the device program from the specified kernelFile and the functionName
 void OpenCL_Data::setProgram(string kernelFileName, string functionName)
 {
+	//initialize contexts and etc.
+	this->initialize();
+
 	size_t srcKernelLength = 0; 
 	FILE *kernelFile = NULL;
 	char *kernelString = NULL;
@@ -352,13 +357,13 @@ void OpenCL_Data::setProgram(string kernelFileName, string functionName)
 	
 		//now, read the kernel file into the memory
 		size_t kernelLength = fread(kernelString, 1, srcKernelLength, kernelFile);
-	
+
 		//close the kernel file
 		fclose(kernelFile);
 	
 		//create the program with the source code in the kernel file
 		const char * str = kernelFileName.c_str();
-		this->program = clCreateProgramWithSource(this->context, 1, (const char **)&str, &srcKernelLength, &err_code);
+		this->program = clCreateProgramWithSource(this->context, 1, (const char **)&kernelString, &srcKernelLength, &err_code);
 		if (err_code != CL_SUCCESS) {
 			free(kernelString);
 			cout << "Error. Failed to create program from source. CL Error: " << err_code << endl;
@@ -366,17 +371,23 @@ void OpenCL_Data::setProgram(string kernelFileName, string functionName)
 		else
 		{
 			//build the program from the source
-			err_code = clBuildProgram(this->program, 1, &(this->deviceID), NULL, NULL, NULL);
+			err_code = clBuildProgram(this->program, 1, &(this->deviceID), "", NULL, NULL);
 			if (err_code != CL_SUCCESS) {
 				cout << "Error. Could not build program. CL Error: " << err_code << endl;
-				size_t length;
+				size_t length = 0;
 				char *buffer;
 				clGetProgramBuildInfo(this->program, this->deviceID, CL_PROGRAM_BUILD_LOG, 0, NULL, &length);
 				buffer = (char *)malloc(length);
+				clGetProgramBuildInfo(this->program, this->deviceID, CL_PROGRAM_BUILD_LOG, length, buffer, &length);
 				cout << endl << "Build Log Information" << endl;
-				clGetProgramBuildInfo(this->program, this->deviceID, CL_PROGRAM_BUILD_LOG, length, buffer, NULL);
-				cout << buffer;
+				cout << "Log length: " << length << endl;
+				//cout << buffer;
+				FILE *tmp = fopen("tmp.txt", "w");
+				fprintf(tmp, "%s", buffer);
+				cout << "Written debug to filename: tmp.txt" << endl;
+				fclose(tmp);
 				free(buffer);
+				
 				free(kernelString);
 			}
 			else 
@@ -563,13 +574,13 @@ void OpenCL_Data::initializeBuffers()
 		switch (arguments.at(i).io)
 		{
 			case INPUT:
-		buffer = clCreateBuffer(this->context, CL_MEM_READ_ONLY, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, &ret);
+		buffer = clCreateBuffer(this->context, CL_MEM_WRITE_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
 				break;
 			case OUTPUT:
-		buffer = clCreateBuffer(this->context, CL_MEM_WRITE_ONLY, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, &ret);
+		buffer = clCreateBuffer(this->context, CL_MEM_READ_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
 				break;
 			case INOUT:
-		buffer = clCreateBuffer(this->context, CL_MEM_READ_WRITE, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, &ret);
+		buffer = clCreateBuffer(this->context, CL_MEM_READ_WRITE, this->arguments.at(i).argumentSize, NULL, &ret);
 				break;
 		}
 
@@ -583,7 +594,7 @@ void OpenCL_Data::initializeBuffers()
 			this->arguments.at(i).buffer = buffer;
 			if (this->arguments.at(i).memType == GLOBAL)
 			{
-				ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, this->arguments.at(i).argumentSize, this->arguments.at(i).argument);
+				ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, sizeof(cl_mem), &(this->arguments.at(i).buffer));
 				if (ret != CL_SUCCESS)
 				{
 					cout << "Error. Failed to set kernel argument " << i <<". CL Error: " << ret << endl;
@@ -592,7 +603,8 @@ void OpenCL_Data::initializeBuffers()
 			}
 			else
 			{
-				ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, this->arguments.at(i).argumentSize, NULL);
+				//ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, this->arguments.at(i).argumentSize, NULL);
+				ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, sizeof(cl_mem), &(this->arguments.at(i).buffer));
 				if (ret != CL_SUCCESS)
 				{
 					cout << "Error. Failed to set kernel argument " << i <<". CL Error: " << ret << endl;
@@ -611,11 +623,14 @@ void OpenCL_Data::initializeBuffers()
 }
 
 //This function will enqueue a kernel to execute across the device with the specified ranges
-void OpenCL_Data::start(int globalWorkSize, int localWorkSize)
+void OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize)
 {
+	this->initializeBuffers();
+	this->writeBuffers();
+
 	cl_int ret;
 
-	ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, 1, NULL, (size_t *)&globalWorkSize, (size_t *)&localWorkSize, 0, NULL, NULL);
+	ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
 	if (ret != CL_SUCCESS)
 		cout << "Error. Could not begin program execution. CL Error: " << ret << endl;
 }
