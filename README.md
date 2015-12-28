@@ -10,19 +10,15 @@ Additionally, this library provides functions to establish openCL device context
 
 1. To use the library, simply instantiate an object of the class. 
 
-2. Next, associate a platform ID, and then a device ID with the class using `setPlatformID()` and `setDeviceID()` respectively. 
+2. Next, associate a platform ID, and then a device ID with the class using `setPlatformID(int index)` and `setDeviceID(int index)` respectively. 
 
-3. Next, associate and compile your openCL kernel file by supplying the file and function name to the `setProgram()` function.
+3. Next, associate and compile your openCL kernel file by supplying the file and function name to the `setProgram(string OpenCLKernelFileName, string OpenCLKernelFunctionName)` function and provide the source file for the OpenCL kernel as well as the kernel main function name.
 
-4. After that, add all kernel arguments using the `SetKernelArgument()` function.
+4. After that, add all kernel arguments using the `SetKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType)` function.
 
-5. To write data to the OpenCL device and establish all required OpenCL Structures, call the `initialize()` function.
+5. Finally, the program is ready to begin. Call the `start(size_t globalWorkSize, size_t localWorkSize)` function to initialize processing with the global work size and local work size.
 
-6. After `initialize()`, call `writeData()` to enqueue a write of all buffers to the OpenCL device.
-
-7. Finally, the program is ready to begin. Call the `start()` function to initialize processing.
-
-8. To read results from the device, first wait for the kernel execution to finish. When it has, call the `readResults()` function. This will read all parameters specified as OUTPUT or INOUTs to their respective buffers for use in your program.
+6. To read results from the device, first wait for the kernel execution to finish. When it has, call the `readResults()` function. This will read all parameters specified as OUTPUT or INOUTs to their respective buffers for use in your program.
 
 ### _Alternate Use:_
 
