@@ -539,6 +539,7 @@ void OpenCL_Data::writeBuffers()
 	//Copy all the data specified by the arguments into the respective openCL Buffers
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
+
 		ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
 		if (ret != CL_SUCCESS)
 			cout << "Error. Failed to enqueue write of argument " << i <<". CL Error: " << ret << endl;
@@ -564,26 +565,28 @@ void OpenCL_Data::readResults()
 //This function initializes all buffers and sets kernel arguments. This should not be called by the user and will be called by the initialize() function
 void OpenCL_Data::initializeBuffers()
 {
-	cl_int ret;
+	cl_int ret = 0;
 	cl_mem buffer;
 	int flag = 0;
 	//Loop through the Arguments vector and instantiate each buffer
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
-		//Create the buffer
-		switch (arguments.at(i).io)
+		if (arguments.at(i).memType == GLOBAL)
 		{
-			case INPUT:
-		buffer = clCreateBuffer(this->context, CL_MEM_WRITE_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
-				break;
-			case OUTPUT:
-		buffer = clCreateBuffer(this->context, CL_MEM_READ_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
-				break;
-			case INOUT:
-		buffer = clCreateBuffer(this->context, CL_MEM_READ_WRITE, this->arguments.at(i).argumentSize, NULL, &ret);
-				break;
+			//Create the buffer
+			switch (arguments.at(i).io)
+			{
+				case INPUT:
+			buffer = clCreateBuffer(this->context, CL_MEM_WRITE_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
+					break;
+				case OUTPUT:
+			buffer = clCreateBuffer(this->context, CL_MEM_READ_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
+					break;
+				case INOUT:
+			buffer = clCreateBuffer(this->context, CL_MEM_READ_WRITE, this->arguments.at(i).argumentSize, NULL, &ret);
+					break;
+			}
 		}
-
 		if (ret != CL_SUCCESS)
 		{
 			cout << "Failed to create buffer for argument " << i <<". CL Error: " << ret << endl;
@@ -597,20 +600,28 @@ void OpenCL_Data::initializeBuffers()
 				ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, sizeof(cl_mem), &(this->arguments.at(i).buffer));
 				if (ret != CL_SUCCESS)
 				{
-					cout << "Error. Failed to set kernel argument " << i <<". CL Error: " << ret << endl;
+					cout << "Error. Failed to set global kernel argument " << i <<". CL Error: " << ret << endl;
 					flag += 1;
 				}
 			}
-			else
+			else if (this->arguments.at(i).memType == LOCAL)
 			{
-				//ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, this->arguments.at(i).argumentSize, NULL);
-				ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, sizeof(cl_mem), &(this->arguments.at(i).buffer));
+				ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, this->arguments.at(i).argumentSize, NULL);
 				if (ret != CL_SUCCESS)
 				{
-					cout << "Error. Failed to set kernel argument " << i <<". CL Error: " << ret << endl;
+					cout << "Error. Failed to set local kernel argument " << i <<". CL Error: " << ret << endl;
 					flag += 1;
 				}
 			
+			}
+			else
+			{
+				ret = clSetKernelArg(this->kernel, (cl_uint)this->arguments.at(i).argumentIndex, this->arguments.at(i).argumentSize, this->arguments.at(i).argument);
+				if (ret != CL_SUCCESS)
+				{
+					cout << "Error. Failed to set private kernel argument " << i <<". CL Error: " << ret << endl;
+					flag += 1;
+				}
 			}
 		}
 
