@@ -27,6 +27,7 @@ OpenCL_Data::OpenCL_Data()
 	commandQueue = NULL;
 	program = NULL;
 	kernel = NULL;
+	localMemorySize = 0;
 
 }	
 
@@ -307,10 +308,10 @@ void OpenCL_Data::queryMemoryInfo()
 }
 
 //Create the command queue and context for the associated device
-void OpenCL_Data::initialize()
+int OpenCL_Data::initialize()
 {
-
-	cl_int ret;
+	int retVal = 1;
+	cl_int ret = 0;
 	if (this->context == NULL)
 	{
 		this->context = clCreateContext(NULL, 1, &(this->deviceID), NULL, NULL, &ret);
@@ -324,18 +325,22 @@ void OpenCL_Data::initialize()
 			{
 				this->commandQueue = clCreateCommandQueue(this->context, this->deviceID, 0, &ret);
 				if (ret != CL_SUCCESS)
+				{
 					cout << "Error. Failed to create the command queue. CL Error: " << ret << endl;
+					retVal = 0;
+				}
 			}
 		}
 	}
-	
+	return retVal;
 }
 
 //Configure the device program from the specified kernelFile and the functionName
-void OpenCL_Data::setProgram(string kernelFileName, string functionName)
+int OpenCL_Data::setProgram(string kernelFileName, string functionName)
 {
+	int retVal = 1;
 	//initialize contexts and etc.
-	this->initialize();
+	retVal = this->initialize();
 
 	size_t srcKernelLength = 0; 
 	FILE *kernelFile = NULL;
@@ -366,6 +371,7 @@ void OpenCL_Data::setProgram(string kernelFileName, string functionName)
 		this->program = clCreateProgramWithSource(this->context, 1, (const char **)&kernelString, &srcKernelLength, &err_code);
 		if (err_code != CL_SUCCESS) {
 			free(kernelString);
+			retVal = 0;
 			cout << "Error. Failed to create program from source. CL Error: " << err_code << endl;
 		}
 		else
@@ -375,6 +381,7 @@ void OpenCL_Data::setProgram(string kernelFileName, string functionName)
 			if (err_code != CL_SUCCESS) {
 				cout << "Error. Could not build program. CL Error: " << err_code << endl;
 				size_t length = 0;
+				retVal = 0;
 				char *buffer;
 				clGetProgramBuildInfo(this->program, this->deviceID, CL_PROGRAM_BUILD_LOG, 0, NULL, &length);
 				buffer = (char *)malloc(length);
@@ -395,6 +402,7 @@ void OpenCL_Data::setProgram(string kernelFileName, string functionName)
 				//create our kernel
 				this->kernel = clCreateKernel(this->program, functionName.c_str(), &err_code);
 				if (err_code != CL_SUCCESS) {
+					retVal = 0;
 					cout << "Error. Failed to create kernel. CL Error: " << err_code << endl;
 				}				
 				//free allocated memory
@@ -402,6 +410,7 @@ void OpenCL_Data::setProgram(string kernelFileName, string functionName)
 			}
 		}
 	}
+	return retVal;
 }
 
 //Set a kernel argument based upon parameters
@@ -428,7 +437,11 @@ void OpenCL_Data::setKernelArgument(int argIndex, void *argument, size_t argumen
 	}
 
 	if (!flag)
+	{
 		this->arguments.push_back(arg);
+		if (memType == LOCAL)
+			this->localMemorySize += argumentSize;
+	}
 }
 
 //This will set a kernel argument with the specified argument parameter if it does not already exist
@@ -447,7 +460,11 @@ void OpenCL_Data::setKernelArgument(OpenCL_Argument argument)
 	}
 
 	if (!flag)
+	{
 		this->arguments.push_back(argument);
+		if (argument.memType == LOCAL)
+			this->localMemorySize += argument.argumentSize;
+	}
 }
 
 //This function will update the argument specified by argIndex with the provided parameters
@@ -460,11 +477,19 @@ void OpenCL_Data::updateKernelArgument(int argIndex, void *argument, size_t argu
 	{
 		if (this->arguments.at(i).argumentIndex == argIndex)
 		{
+			//if the argument WAS local, subtract the memory it used
+			if (this->arguments.at(i).memType == LOCAL)
+				this->localMemorySize -= arguments.at(i).argumentSize;
+
 			flag = 1;
 			this->arguments.at(i).argument = argument;
 			this->arguments.at(i).argumentSize = argumentSize;
 			this->arguments.at(i).io = io;
 			this->arguments.at(i).memType = memType;
+
+			//if the argument is NOW local, add the memory it used
+			if (this->arguments.at(i).memType == LOCAL)
+				this->localMemorySize += arguments.at(i).argumentSize;
 		}
 	}
 
@@ -482,8 +507,16 @@ void OpenCL_Data::updateKernelArgument(OpenCL_Argument argument)
 	{
 		if (this->arguments.at(i).argumentIndex == argument.argumentIndex)
 		{
+			//if the argument WAS local, subtract the memory it used
+			if (this->arguments.at(i).memType == LOCAL)
+				this->localMemorySize -= arguments.at(i).argumentSize;
+			
 			flag = 1;
 			this->arguments.at(i) = argument;
+
+			//if the argument WAS local, subtract the memory it used
+			if (this->arguments.at(i).memType == LOCAL)
+				this->localMemorySize += arguments.at(i).argumentSize;
 		}
 	}
 
@@ -495,7 +528,7 @@ void OpenCL_Data::updateKernelArgument(OpenCL_Argument argument)
 void OpenCL_Data::removeKernelArgument(int argIndex)
 {
 
-	cl_int ret;
+	cl_int ret = 0;
 	int flag = 0;
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
@@ -505,7 +538,12 @@ void OpenCL_Data::removeKernelArgument(int argIndex)
 			//First, release the buffer object if it exists
 			if (this->arguments.at(i).buffer != NULL)
 			{
-				ret = clReleaseMemObject(this->arguments.at(i).buffer);
+				if (arguments.at(i).memType == LOCAL)
+					this->localMemorySize -= arguments.at(i).argumentSize;
+
+				if (arguments.at(i).buffer)
+					ret = clReleaseMemObject(this->arguments.at(i).buffer);
+				
 				if (ret != CL_SUCCESS)
 					cout << "Error. Failed to release memory object for argument " << argIndex <<". CL Error: " << ret << endl;
 			}
@@ -532,39 +570,50 @@ OpenCL_Argument OpenCL_Data::getKernelArgument(int argIndex)
 }
 
 //This function will write all data from arguments into the cl_mem objects
-void OpenCL_Data::writeBuffers()
+int OpenCL_Data::writeBuffers()
 {
+	int retVal = 1;
 	cl_int ret;
 
 	//Copy all the data specified by the arguments into the respective openCL Buffers
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
-
-		ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
+		if (this->arguments.at(i).memType == GLOBAL && this->arguments.at(i).io != OUTPUT)
+			ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
 		if (ret != CL_SUCCESS)
+		{
 			cout << "Error. Failed to enqueue write of argument " << i <<". CL Error: " << ret << endl;
-
+			retVal = 0;
+		}
 	}
-
+	return retVal;
 }
 
 //This will read results from the device into any buffer objects that have OUTPUT or INOUT status
-void OpenCL_Data::readResults()
+int OpenCL_Data::readResults()
 {
+	int retVal = 1;
 	cl_int ret;
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
 		if (this->arguments.at(i).io == OUTPUT || this->arguments.at(i).io == INOUT)
 		{
 			ret = clEnqueueReadBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
+			if (ret != CL_SUCCESS)
+			{
+				cout << "Error. Could not read result from argument " << i << ". CL Error: " << ret << endl;
+				retVal = 0;
+			}
 		}
 	}
+	return retVal;
 }
 
 
 //This function initializes all buffers and sets kernel arguments. This should not be called by the user and will be called by the initialize() function
-void OpenCL_Data::initializeBuffers()
+int OpenCL_Data::initializeBuffers()
 {
+	int retVal = 1;
 	cl_int ret = 0;
 	cl_mem buffer;
 	int flag = 0;
@@ -591,6 +640,7 @@ void OpenCL_Data::initializeBuffers()
 		{
 			cout << "Failed to create buffer for argument " << i <<". CL Error: " << ret << endl;
 			flag += 1;
+			retVal = 0;
 		}
 		else
 		{
@@ -602,6 +652,7 @@ void OpenCL_Data::initializeBuffers()
 				{
 					cout << "Error. Failed to set global kernel argument " << i <<". CL Error: " << ret << endl;
 					flag += 1;
+					retVal = 0;
 				}
 			}
 			else if (this->arguments.at(i).memType == LOCAL)
@@ -611,6 +662,7 @@ void OpenCL_Data::initializeBuffers()
 				{
 					cout << "Error. Failed to set local kernel argument " << i <<". CL Error: " << ret << endl;
 					flag += 1;
+					retVal = 0;
 				}
 			
 			}
@@ -621,6 +673,7 @@ void OpenCL_Data::initializeBuffers()
 				{
 					cout << "Error. Failed to set private kernel argument " << i <<". CL Error: " << ret << endl;
 					flag += 1;
+					retVal = 0;
 				}
 			}
 		}
@@ -631,17 +684,26 @@ void OpenCL_Data::initializeBuffers()
 	if (flag)
 		cout << "Failed to set " << flag << " arguments." << endl;
 
+	return retVal;
 }
 
 //This function will enqueue a kernel to execute across the device with the specified ranges
-void OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize)
+int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize)
 {
-	this->initializeBuffers();
-	this->writeBuffers();
+	int retVal = this->initializeBuffers();
+	if (retVal)
+		retVal = this->writeBuffers();
 
 	cl_int ret;
-
-	ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
+	if (retVal)
+		ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
+	
 	if (ret != CL_SUCCESS)
+	{
+		retVal = 0;
 		cout << "Error. Could not begin program execution. CL Error: " << ret << endl;
+		if (ret == -5)
+			cout << "Potentially too much local memory was used. Local memory usage: " << localMemorySize << endl;
+	}
+	return retVal;
 }

@@ -68,19 +68,19 @@ class OpenCL_Data {
 		void setPlatformID(int index);	//This will set the platform ID to the index specified
 		void setDeviceID(int index);	//This will set the device ID to the index specified
 
-		void initialize(); 				//This function creates the command queue and context for the specified device ID
-		void start(size_t globalWorkSize, size_t localWorkSize);					//Start program execution on the device
+		int initialize(); 				//This function creates the command queue and context for the specified device ID
+		int start(size_t globalWorkSize, size_t localWorkSize);					//Start program execution on the device
 										//This will also create all buffers on the device for use.
-		void setProgram(string kernelFileName, string functionName); //This function will set the openCL program from the file specified
+		int setProgram(string kernelFileName, string functionName); //This function will set the openCL program from the file specified
 		void setKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType); //Set a Kernel Argument
 		void setKernelArgument(OpenCL_Argument arg); 	//Set the Argument specified by Index
 		void updateKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType);	//Update the Argument specified by argIndex
 		void updateKernelArgument(OpenCL_Argument arg);		//Update the Argument specified by Index
 		void removeKernelArgument(int argIndex);			//remove the specified Argument
 		OpenCL_Argument getKernelArgument(int argIndex); 	//Get the specified Argument
-		void writeBuffers();			//Write all Kernel Argument Buffers to the device
-		void readResults();				//Read results from the GPU into the specified IO buffer
-		void initializeBuffers();		//Initialize the OpenCL Buffers specified by Arguments
+		int writeBuffers();			//Write all Kernel Argument Buffers to the device
+		int readResults();				//Read results from the GPU into the specified IO buffer
+		int initializeBuffers();		//Initialize the OpenCL Buffers specified by Arguments
 	
 	private:
 
@@ -91,7 +91,7 @@ class OpenCL_Data {
 		cl_command_queue commandQueue; //The command queue for the assocaited device
 		cl_program program; //The program that the OpenCL Device will run
 		cl_kernel kernel; //The kernel of the OpenCL Device currently being run
-
+		size_t localMemorySize;
 	
 		//Members to expand upon class functionality
 		vector<OpenCL_Argument> arguments; //Vector of Argument Parameters to store argument information
