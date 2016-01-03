@@ -89,7 +89,7 @@ OpenCL_Data::~OpenCL_Data()
 	//Free all the memory buffers for OpenCL
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
-		if (this->arguments.at(i).buffer != NULL)
+		if (this->arguments.at(i).buffer != NULL && this->arguments.at(i).memType == GLOBAL)
 		{
 			ret = clReleaseMemObject(this->arguments.at(i).buffer);
 			if (ret != CL_SUCCESS)
@@ -596,7 +596,7 @@ int OpenCL_Data::readResults()
 	cl_int ret;
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
-		if (this->arguments.at(i).io == OUTPUT || this->arguments.at(i).io == INOUT)
+		if ((this->arguments.at(i).io == OUTPUT || this->arguments.at(i).io == INOUT) && this->arguments.at(i).memType == GLOBAL)
 		{
 			ret = clEnqueueReadBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
 			if (ret != CL_SUCCESS)
