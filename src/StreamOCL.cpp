@@ -592,6 +592,9 @@ int OpenCL_Data::writeBuffers()
 //This will read results from the device into any buffer objects that have OUTPUT or INOUT status
 int OpenCL_Data::readResults()
 {
+	//blocking is used for timing
+
+
 	int retVal = 1;
 	cl_int ret;
 	for (int i = 0; i < this->arguments.size(); i++)
@@ -688,7 +691,7 @@ int OpenCL_Data::initializeBuffers()
 }
 
 //This function will enqueue a kernel to execute across the device with the specified ranges
-int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize)
+int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize, bool blocking)
 {
 	int retVal = this->initializeBuffers();
 	if (retVal)
@@ -705,5 +708,7 @@ int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize)
 		if (ret == -5)
 			cout << "Potentially too much local memory was used. Local memory usage: " << localMemorySize << endl;
 	}
+	if (blocking)
+		clFinish(this->commandQueue);
 	return retVal;
 }
