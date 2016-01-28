@@ -184,17 +184,17 @@ void OpenCL_Data::queryDevices()
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
 			printf("Global Size: \t\t%d\n", ((cl_ulong *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Global Cache Size: \t%d\n", ((cl_ulong *)buffer)[0]);
+			printf("Global Cache Size: \t%lu\n", ((cl_ulong *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(buffer), buffer, &buffer_used);
 			printf("Max Allocation: \t%d\n", ((unsigned long *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_PARAMETER_SIZE, sizeof(buffer), buffer, &buffer_used);
 			printf("Maxi Param Size: \t%d\n", ((size_t *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_LOCAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Local Size: \t\t%d\n", ((cl_ulong *)buffer)[0]);
+			printf("Local Size: \t\t%lu\n", ((cl_ulong *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_LOCAL_MEM_TYPE, sizeof(buffer), buffer, &buffer_used);
 			printf("Local Type: \t\t%d\n", ((cl_device_local_mem_type *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, sizeof(buffer), buffer, &buffer_used);
-			printf("Max Const Buffer: \t%d\n\n", ((cl_ulong *) buffer)[0]);
+			printf("Max Const Buffer: \t%lu\n\n", ((cl_ulong *) buffer)[0]);
 		} 
 	}
 
@@ -287,21 +287,21 @@ void OpenCL_Data::queryMemoryInfo()
 
 	//Display Global Memory information
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
-	printf("Global Memory Size (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
+	printf("Global Memory Size (bytes): \t%lu\n", ((cl_ulong *)buffer)[0]);
 	
 	//Display Global Memory Cache Info
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(buffer), buffer, &buffer_used);
-	printf("Global Memory Cache (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
+	printf("Global Memory Cache (bytes): \t%lu\n", ((cl_ulong *)buffer)[0]);
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, sizeof(buffer), buffer, &buffer_used);
 	printf("Global Memory Cache Type: \t%d\n", ((cl_device_mem_cache_type *)buffer)[0]);
 
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(buffer), buffer, &buffer_used);
-	printf("Maximum Memory Alloc (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
+	printf("Maximum Memory Alloc (bytes): \t%lu\n", ((cl_ulong *)buffer)[0]);
 		
 
 	//Display Local Memory information
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
-	printf("Maximum Local Memory Size (bytes): \t%d\n", ((cl_ulong *)buffer)[0]);
+	printf("Maximum Local Memory Size (bytes): \t%lu\n", ((cl_ulong *)buffer)[0]);
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_LOCAL_MEM_TYPE, sizeof(buffer), buffer, &buffer_used);
 	printf("Local Memory Type: \t%.*s\n", ((cl_device_local_mem_type *)buffer)[0]);
 
@@ -711,4 +711,12 @@ int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize, bool blockin
 	if (blocking)
 		clFinish(this->commandQueue);
 	return retVal;
+}
+
+uint64_t OpenCL_Data::getMaximumMemorySize()		//Get the maximum memory size of the openCL device	
+{
+	char buffer[256];
+	size_t buffer_used;
+	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
+	return ((uint64_t)(((cl_ulong *)buffer)[0]));
 }

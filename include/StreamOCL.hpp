@@ -27,6 +27,7 @@
 #include <CL/cl.h> //The main OpenCL Header file
 #include <vector>
 #include <stdio.h>
+#include <stdint.h>
 
 typedef enum {
 	INPUT,
@@ -81,7 +82,7 @@ class OpenCL_Data {
 		int writeBuffers();			//Write all Kernel Argument Buffers to the device
 		int readResults();				//Read results from the GPU into the specified IO buffer
 		int initializeBuffers();		//Initialize the OpenCL Buffers specified by Arguments
-	
+		uint64_t getMaximumMemorySize();		//Get the maximum memory size of the openCL device	
 	private:
 
 		//OpenCL Specific Members
