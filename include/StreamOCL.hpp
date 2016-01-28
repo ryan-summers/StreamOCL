@@ -57,7 +57,7 @@ using std::vector;
 
 class OpenCL_Data {
 	public:
-		OpenCL_Data(); 					//Default Constructor
+		OpenCL_Data(bool timeInfo = false); 					//Default Constructor
 		OpenCL_Data(OpenCL_Data &data); //Copy Constructor
 		~OpenCL_Data(); 				//Destructor
 
@@ -93,6 +93,7 @@ class OpenCL_Data {
 		cl_program program; //The program that the OpenCL Device will run
 		cl_kernel kernel; //The kernel of the OpenCL Device currently being run
 		size_t localMemorySize;
+		bool printTimeInfo;
 	
 		//Members to expand upon class functionality
 		vector<OpenCL_Argument> arguments; //Vector of Argument Parameters to store argument information

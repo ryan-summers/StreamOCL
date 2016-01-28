@@ -1,26 +1,27 @@
 #include "StreamOCL.hpp"
 /*
-    StreamOCL - GNU GPL Copyright Notice
-    Copyright (C) 2015  Ryan Summers
+   StreamOCL - GNU GPL Copyright Notice
+   Copyright (C) 2015  Ryan Summers
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License along
-    with this program; if not, write to the Free Software Foundation, Inc.,
-    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/
+   You should have received a copy of the GNU General Public License along
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 //Default constructor for the OpenCL Class
-OpenCL_Data::OpenCL_Data() 
+OpenCL_Data::OpenCL_Data(bool printTimeInfo) 
 {
+	this->printTimeInfo = printTimeInfo;
 	platformID = NULL;
 	deviceID = NULL;
 	context = NULL;
@@ -60,8 +61,8 @@ OpenCL_Data::~OpenCL_Data()
 	if (this->kernel)
 	{
 		ret = clReleaseKernel(this->kernel);
-			if (ret != CL_SUCCESS)
-				cout << "Error. Could not release kernel. CL Error: " << ret << endl;
+		if (ret != CL_SUCCESS)
+			cout << "Error. Could not release kernel. CL Error: " << ret << endl;
 	}
 
 	if (this->program)
@@ -115,8 +116,8 @@ void OpenCL_Data::queryPlatforms()
 
 	//Get the Platform IDs
 	err = clGetPlatformIDs(20, platformIDs, &ret);
-	
-	
+
+
 	//Print out Platform info
 	cout << "Found " << (int)ret << " platforms!" << endl << "-------------------" << endl;
 	for (int i = 0; i < ret; i++)
@@ -147,12 +148,12 @@ void OpenCL_Data::queryDevices()
 
 	char buffer[1024]; //allocate 1KB of data for the buffer space so we can query the devices
 	size_t buffer_used;
-	
+
 	//Get all the available devices on the platform
 	err = clGetDeviceIDs(this->platformID, CL_DEVICE_TYPE_ALL, 20, deviceIDs, &ret);
 	printf("\nFound %d devices. \n", ret);
 	printf("----------------\n\n");
-	
+
 	if (err != CL_SUCCESS)
 		printf("Error. Could not get device IDs. Error code: %d", err);
 	else
@@ -177,7 +178,7 @@ void OpenCL_Data::queryDevices()
 			printf("Max Compute Units: \t%d\n", ((cl_uint *)buffer)[0]);
 			clGetDeviceInfo(deviceIDs[iterator], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(buffer), buffer, &buffer_used);
 			printf("Max Work Group Size: \t%d\n", ((size_t *)buffer)[0]);
-			
+
 			//Memory info
 			cout << endl << "Memory Information: (All sizes in Bytes): " << endl;
 			cout << "----------------------------------------" << endl;
@@ -260,7 +261,7 @@ void OpenCL_Data::queryAllDevices()
 {
 	//Create a temporary variable to hold the platform ID
 	cl_platform_id holder = this->platformID;
-	
+
 	cl_int error;
 	cl_uint ret;
 	cl_platform_id platformIDs[20];
@@ -288,7 +289,7 @@ void OpenCL_Data::queryMemoryInfo()
 	//Display Global Memory information
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
 	printf("Global Memory Size (bytes): \t%lu\n", ((cl_ulong *)buffer)[0]);
-	
+
 	//Display Global Memory Cache Info
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(buffer), buffer, &buffer_used);
 	printf("Global Memory Cache (bytes): \t%lu\n", ((cl_ulong *)buffer)[0]);
@@ -310,6 +311,8 @@ void OpenCL_Data::queryMemoryInfo()
 //Create the command queue and context for the associated device
 int OpenCL_Data::initialize()
 {
+	time_t start, finish;
+	start = clock();
 	int retVal = 1;
 	cl_int ret = 0;
 	if (this->context == NULL)
@@ -332,12 +335,17 @@ int OpenCL_Data::initialize()
 			}
 		}
 	}
+	finish = clock();
+	if (printTimeInfo)
+		cout << "Initialization of context and command queue: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
 	return retVal;
 }
 
 //Configure the device program from the specified kernelFile and the functionName
 int OpenCL_Data::setProgram(string kernelFileName, string functionName)
 {
+	time_t start, finish;
+	start = clock();	
 	int retVal = 1;
 	//initialize contexts and etc.
 	retVal = this->initialize();
@@ -353,19 +361,19 @@ int OpenCL_Data::setProgram(string kernelFileName, string functionName)
 		cout << "Failed to open the Kernel File. " << endl;
 	else
 	{
-		
+
 		fseek(kernelFile, 0L, SEEK_END);
 		srcKernelLength = ftell(kernelFile);
 		fseek(kernelFile, 0L, SEEK_SET);
 		kernelString = (char *)calloc(srcKernelLength, 1);
-		
-	
+
+
 		//now, read the kernel file into the memory
 		size_t kernelLength = fread(kernelString, 1, srcKernelLength, kernelFile);
 
 		//close the kernel file
 		fclose(kernelFile);
-	
+
 		//create the program with the source code in the kernel file
 		const char * str = kernelFileName.c_str();
 		this->program = clCreateProgramWithSource(this->context, 1, (const char **)&kernelString, &srcKernelLength, &err_code);
@@ -394,7 +402,7 @@ int OpenCL_Data::setProgram(string kernelFileName, string functionName)
 				cout << "Written debug to filename: tmp.txt" << endl;
 				fclose(tmp);
 				free(buffer);
-				
+
 				free(kernelString);
 			}
 			else 
@@ -410,6 +418,10 @@ int OpenCL_Data::setProgram(string kernelFileName, string functionName)
 			}
 		}
 	}
+	finish = clock();
+	if (printTimeInfo)
+		cout << "Creation of kernel file: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
+
 	return retVal;
 }
 
@@ -510,7 +522,7 @@ void OpenCL_Data::updateKernelArgument(OpenCL_Argument argument)
 			//if the argument WAS local, subtract the memory it used
 			if (this->arguments.at(i).memType == LOCAL)
 				this->localMemorySize -= arguments.at(i).argumentSize;
-			
+
 			flag = 1;
 			this->arguments.at(i) = argument;
 
@@ -543,7 +555,7 @@ void OpenCL_Data::removeKernelArgument(int argIndex)
 
 				if (arguments.at(i).buffer)
 					ret = clReleaseMemObject(this->arguments.at(i).buffer);
-				
+
 				if (ret != CL_SUCCESS)
 					cout << "Error. Failed to release memory object for argument " << argIndex <<". CL Error: " << ret << endl;
 			}
@@ -572,6 +584,9 @@ OpenCL_Argument OpenCL_Data::getKernelArgument(int argIndex)
 //This function will write all data from arguments into the cl_mem objects
 int OpenCL_Data::writeBuffers()
 {
+	time_t start, finish, tmp_start, tmp_finish;
+	start = clock();
+
 	int retVal = 1;
 	cl_int ret;
 
@@ -579,13 +594,24 @@ int OpenCL_Data::writeBuffers()
 	for (int i = 0; i < this->arguments.size(); i++)
 	{
 		if (this->arguments.at(i).memType == GLOBAL && this->arguments.at(i).io != OUTPUT)
-			ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
-		if (ret != CL_SUCCESS)
 		{
-			cout << "Error. Failed to enqueue write of argument " << i <<". CL Error: " << ret << endl;
-			retVal = 0;
+			tmp_start = clock();
+			ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
+			if (ret != CL_SUCCESS)
+			{
+				cout << "Error. Failed to enqueue write of argument " << i <<". CL Error: " << ret << endl;
+				retVal = 0;
+			} 
+			else if (printTimeInfo)
+			{
+				tmp_finish = clock();
+				cout << "Write of argument " << i << " took " << (double)(tmp_finish - tmp_start) / CLOCKS_PER_SEC << " seconds." << endl;
+			}
 		}
 	}
+	finish = clock();
+	if (printTimeInfo)
+		cout << "Write of all data to the device took: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
 	return retVal;
 }
 
@@ -593,7 +619,8 @@ int OpenCL_Data::writeBuffers()
 int OpenCL_Data::readResults()
 {
 	//blocking is used for timing
-
+	time_t start, finish;
+	start = clock();
 
 	int retVal = 1;
 	cl_int ret;
@@ -609,6 +636,9 @@ int OpenCL_Data::readResults()
 			}
 		}
 	}
+	finish = clock();
+	if (printTimeInfo)
+		cout << "Read of all data to the device took: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
 	return retVal;
 }
 
@@ -616,6 +646,8 @@ int OpenCL_Data::readResults()
 //This function initializes all buffers and sets kernel arguments. This should not be called by the user and will be called by the initialize() function
 int OpenCL_Data::initializeBuffers()
 {
+	time_t start, finish;
+	start = clock();
 	int retVal = 1;
 	cl_int ret = 0;
 	cl_mem buffer;
@@ -629,13 +661,13 @@ int OpenCL_Data::initializeBuffers()
 			switch (arguments.at(i).io)
 			{
 				case INPUT:
-			buffer = clCreateBuffer(this->context, CL_MEM_WRITE_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
+					buffer = clCreateBuffer(this->context, CL_MEM_WRITE_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
 					break;
 				case OUTPUT:
-			buffer = clCreateBuffer(this->context, CL_MEM_READ_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
+					buffer = clCreateBuffer(this->context, CL_MEM_READ_ONLY, this->arguments.at(i).argumentSize, NULL, &ret);
 					break;
 				case INOUT:
-			buffer = clCreateBuffer(this->context, CL_MEM_READ_WRITE, this->arguments.at(i).argumentSize, NULL, &ret);
+					buffer = clCreateBuffer(this->context, CL_MEM_READ_WRITE, this->arguments.at(i).argumentSize, NULL, &ret);
 					break;
 			}
 		}
@@ -667,7 +699,7 @@ int OpenCL_Data::initializeBuffers()
 					flag += 1;
 					retVal = 0;
 				}
-			
+
 			}
 			else
 			{
@@ -683,7 +715,10 @@ int OpenCL_Data::initializeBuffers()
 
 		//Set the Kernel Argument	
 	}
-	
+
+	finish = clock();
+	if (printTimeInfo)
+		cout << "Creation of all buffers took: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
 	if (flag)
 		cout << "Failed to set " << flag << " arguments." << endl;
 
@@ -693,6 +728,9 @@ int OpenCL_Data::initializeBuffers()
 //This function will enqueue a kernel to execute across the device with the specified ranges
 int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize, bool blocking)
 {
+	time_t start = clock();
+	time_t finish;
+
 	int retVal = this->initializeBuffers();
 	if (retVal)
 		retVal = this->writeBuffers();
@@ -700,7 +738,7 @@ int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize, bool blockin
 	cl_int ret;
 	if (retVal)
 		ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
-	
+
 	if (ret != CL_SUCCESS)
 	{
 		retVal = 0;
@@ -708,6 +746,9 @@ int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize, bool blockin
 		if (ret == -5)
 			cout << "Potentially too much local memory was used. Local memory usage: " << localMemorySize << endl;
 	}
+	finish = clock();
+	if (printTimeInfo)
+		cout << "Program Execution and write took: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds. NOTE: This number is invalid if blocking is not set!" << endl;
 	if (blocking)
 		clFinish(this->commandQueue);
 	return retVal;
