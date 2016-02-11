@@ -726,7 +726,7 @@ int OpenCL_Data::initializeBuffers()
 }
 
 //This function will enqueue a kernel to execute across the device with the specified ranges
-int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize, bool blocking)
+int OpenCL_Data::start(size_t *globalWorkSize, size_t *localWorkSize, int dim, bool blocking)
 {
 	time_t start = clock();
 	time_t finish;
@@ -737,7 +737,7 @@ int OpenCL_Data::start(size_t globalWorkSize, size_t localWorkSize, bool blockin
 
 	cl_int ret;
 	if (retVal)
-		ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, 1, NULL, &globalWorkSize, &localWorkSize, 0, NULL, NULL);
+		ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, dim, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
 
 	if (ret != CL_SUCCESS)
 	{
@@ -758,6 +758,6 @@ uint64_t OpenCL_Data::getMaximumMemorySize()		//Get the maximum memory size of t
 {
 	char buffer[256];
 	size_t buffer_used;
-	clGetDeviceInfo(this->deviceID, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
+	clGetDeviceInfo(this->deviceID, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(buffer), buffer, &buffer_used);
 	return ((uint64_t)(((cl_ulong *)buffer)[0]));
 }
