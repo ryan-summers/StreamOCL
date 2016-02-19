@@ -70,7 +70,7 @@ class OpenCL_Data {
 		void setDeviceID(int index);	//This will set the device ID to the index specified
 
 		int initialize(); 				//This function creates the command queue and context for the specified device ID
-		int start(size_t *globalWorkSize, size_t *localWorkSize, int dim, bool blocking = false);					//Start program execution on the device
+		int start(size_t *globalWorkSize, size_t *localWorkSize, int dimensions, bool blocking = false);					//Start program execution on the device
 										//This will also create all buffers on the device for use.
 		int setProgram(string kernelFileName, string functionName); //This function will set the openCL program from the file specified
 		void setKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType); //Set a Kernel Argument

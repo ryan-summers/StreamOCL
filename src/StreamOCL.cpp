@@ -726,7 +726,7 @@ int OpenCL_Data::initializeBuffers()
 }
 
 //This function will enqueue a kernel to execute across the device with the specified ranges
-int OpenCL_Data::start(size_t *globalWorkSize, size_t *localWorkSize, int dim, bool blocking)
+int OpenCL_Data::start(size_t *globalWorkSize, size_t *localWorkSize, int dimensions, bool blocking)
 {
 	time_t start = clock();
 	time_t finish;
@@ -737,8 +737,7 @@ int OpenCL_Data::start(size_t *globalWorkSize, size_t *localWorkSize, int dim, b
 
 	cl_int ret;
 	if (retVal)
-		ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, dim, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
-
+		ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, dimensions, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
 	if (ret != CL_SUCCESS)
 	{
 		retVal = 0;
