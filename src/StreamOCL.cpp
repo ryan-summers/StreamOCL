@@ -348,8 +348,10 @@ void OpenCL_Data::queryMemoryInfo()
 //Create the command queue and context for the associated device
 int OpenCL_Data::initialize()
 {
-	time_t start, finish;
-	start = clock();
+	struct timespec start, finish;
+
+	clock_gettime(CLOCK_BOOTTIME, &start);
+
 	int retVal = 1;
 	cl_int ret = 0;
 	if (this->context == NULL)
@@ -372,17 +374,20 @@ int OpenCL_Data::initialize()
 			}
 		}
 	}
-	finish = clock();
+	clock_gettime(CLOCK_BOOTTIME, &finish);
+
 	if (printTimeInfo)
-		cout << "Initialization of context and command queue: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
+		cout << "Initialization of context and command queue: " << finish.tv_sec - start.tv_sec + (finish.tv_nsec - start.tv_nsec)/1000000000.0 << " seconds." << endl;
 	return retVal;
 }
 
 //Configure the device program from the specified kernelFile and the functionName
 int OpenCL_Data::setProgram(string kernelFileName, string functionName)
 {
-	time_t start, finish;
-	start = clock();	
+	struct timespec start, finish;
+	
+	clock_gettime(CLOCK_BOOTTIME, &start);
+
 	int retVal = 1;
 	//initialize contexts and etc.
 	retVal = this->initialize();
@@ -455,9 +460,10 @@ int OpenCL_Data::setProgram(string kernelFileName, string functionName)
 			}
 		}
 	}
-	finish = clock();
+	
+	clock_gettime(CLOCK_BOOTTIME, &finish);
 	if (printTimeInfo)
-		cout << "Creation of kernel file: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
+		cout << "Creation of the kernel took: " << finish.tv_sec - start.tv_sec + (finish.tv_nsec - start.tv_nsec)/1000000000.0 << " seconds." << endl;
 
 	return retVal;
 }
@@ -570,7 +576,7 @@ void OpenCL_Data::updateKernelArgument(OpenCL_Argument argument)
 	}
 
 	if (!flag)
-		cout << "Error. cannot update argument. Argumetn not specified." << endl;
+		cout << "Error. cannot update argument. Argument not specified." << endl;
 }
 
 //This function removes a kernel argument from the vector of arguments
@@ -621,8 +627,8 @@ OpenCL_Argument OpenCL_Data::getKernelArgument(int argIndex)
 //This function will write all data from arguments into the cl_mem objects
 int OpenCL_Data::writeBuffers()
 {
-	time_t start, finish, tmp_start, tmp_finish;
-	start = clock();
+	struct timespec start, finish, tmp;
+	clock_gettime(CLOCK_BOOTTIME, &start);
 
 	int retVal = 1;
 	cl_int ret;
@@ -632,7 +638,7 @@ int OpenCL_Data::writeBuffers()
 	{
 		if (this->arguments.at(i).memType == GLOBAL && this->arguments.at(i).io != OUTPUT)
 		{
-			tmp_start = clock();
+			clock_gettime(CLOCK_BOOTTIME, &tmp);
 			ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
 			if (ret != CL_SUCCESS)
 			{
@@ -641,14 +647,14 @@ int OpenCL_Data::writeBuffers()
 			} 
 			else if (printTimeInfo)
 			{
-				tmp_finish = clock();
-				cout << "Write of argument " << i << " took " << (double)(tmp_finish - tmp_start) / CLOCKS_PER_SEC << " seconds." << endl;
+				clock_gettime(CLOCK_BOOTTIME, &finish);
+				cout << "Write of buffer[" << i << "] took: " << finish.tv_sec - tmp.tv_sec + (finish.tv_nsec - tmp.tv_nsec)/1000000000.0 << " seconds." << endl;
 			}
 		}
 	}
-	finish = clock();
+	clock_gettime(CLOCK_BOOTTIME, &finish);
 	if (printTimeInfo)
-		cout << "Write of all data to the device took: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
+		cout << "Write of all buffers took: " << finish.tv_sec - start.tv_sec + (finish.tv_nsec - start.tv_nsec)/1000000000.0 << " seconds." << endl;
 	return retVal;
 }
 
@@ -656,8 +662,8 @@ int OpenCL_Data::writeBuffers()
 int OpenCL_Data::readResults()
 {
 	//blocking is used for timing
-	time_t start, finish;
-	start = clock();
+	struct timespec start, finish;
+	clock_gettime(CLOCK_BOOTTIME, &start);
 
 	int retVal = 1;
 	cl_int ret;
@@ -673,9 +679,9 @@ int OpenCL_Data::readResults()
 			}
 		}
 	}
-	finish = clock();
+	clock_gettime(CLOCK_BOOTTIME, &finish);
 	if (printTimeInfo)
-		cout << "Read of all data to the device took: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
+		cout << "Read of results took: " << finish.tv_sec - start.tv_sec + (finish.tv_nsec - start.tv_nsec)/1000000000.0 << " seconds." << endl;
 	return retVal;
 }
 
@@ -683,8 +689,8 @@ int OpenCL_Data::readResults()
 //This function initializes all buffers and sets kernel arguments. This should not be called by the user and will be called by the initialize() function
 int OpenCL_Data::initializeBuffers()
 {
-	time_t start, finish;
-	start = clock();
+	struct timespec start, finish;
+	clock_gettime(CLOCK_BOOTTIME, &start);
 	int retVal = 1;
 	cl_int ret = 0;
 	cl_mem buffer;
@@ -753,9 +759,9 @@ int OpenCL_Data::initializeBuffers()
 		//Set the Kernel Argument	
 	}
 
-	finish = clock();
+	clock_gettime(CLOCK_BOOTTIME, &finish);
 	if (printTimeInfo)
-		cout << "Creation of all buffers took: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds." << endl;
+		cout << "Creation of all buffers took: " << finish.tv_sec - start.tv_sec + (finish.tv_nsec - start.tv_nsec)/1000000000.0 << " seconds." << endl;
 	if (flag)
 		cout << "Failed to set " << flag << " arguments." << endl;
 
@@ -765,13 +771,15 @@ int OpenCL_Data::initializeBuffers()
 //This function will enqueue a kernel to execute across the device with the specified ranges
 int OpenCL_Data::start(size_t *globalWorkSize, size_t *localWorkSize, int dimensions, bool blocking)
 {
-	time_t start = clock();
-	time_t finish;
+	struct timespec finish, start;
+
 
 	int retVal = this->initializeBuffers();
 	if (retVal)
 		retVal = this->writeBuffers();
 
+	clock_gettime(CLOCK_BOOTTIME, &start);
+	
 	cl_int ret;
 	if (retVal)
 		ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, dimensions, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
@@ -782,9 +790,12 @@ int OpenCL_Data::start(size_t *globalWorkSize, size_t *localWorkSize, int dimens
 		if (ret == -5)
 			cout << "Potentially too much local memory was used. Local memory usage: " << localMemorySize << endl;
 	}
-	finish = clock();
-	if (printTimeInfo)
-		cout << "Program Execution and write took: " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds. NOTE: This number is invalid if blocking is not set!" << endl;
+	clock_gettime(CLOCK_BOOTTIME, &finish);
+	if (printTimeInfo && blocking)
+		cout << "Kernel execution took: " << finish.tv_sec - start.tv_sec + (finish.tv_nsec - start.tv_nsec)/1000000000.0 << " seconds." << endl;
+	else if(!blocking)
+		cout << "Kernel execution time could not be determined. Please specify kernel as blocking." << endl;
+
 	if (blocking)
 		clFinish(this->commandQueue);
 	return retVal;
