@@ -231,7 +231,7 @@ void OpenCL_Data::setPlatformID(int index)
 }
 
 //This function sets the device ID
-void OpenCL_Data::setDeviceID(int index)
+bool OpenCL_Data::setDeviceID(int index)
 {
 	cl_int error;
 	cl_uint num_devices;
@@ -248,13 +248,50 @@ void OpenCL_Data::setDeviceID(int index)
 	{
 		//Check bounds
 		if (num_devices > index)
+		{
 			this->deviceID = deviceIDs[index];
+			return true;
+		}
 		else
 		{
 			cout << "Error! Attempting to specify non-existant device." << endl;
 			cout << "The Index specified exceeds the number of available devices on the platform." << endl;
 		}
 	}
+	return false;
+}
+
+bool OpenCL_Data::setDeviceID(char *name)
+{
+	cl_int error;
+	cl_uint num_devices;
+	cl_device_id deviceIDs[20];
+
+	char buffer[1024];
+
+
+	error = clGetDeviceIDs(this->platformID, CL_DEVICE_TYPE_ALL, 20, deviceIDs, &num_devices);
+
+	if (error != CL_SUCCESS)
+	{
+		cout << "Error. Could not get device IDs. CL Error Code: " << error << endl;
+		cout << "Have you set the platform yet?" << endl;
+	}
+	else
+	{
+		for (int i = 0; i < (int) num_devices; ++i)
+		{
+			clGetDeviceInfo(deviceIDs[i], CL_DEVICE_NAME, sizeof(buffer), buffer, NULL);
+			
+			if (strcmp(buffer, name) == 0)
+			{
+				this->deviceID = deviceIDs[i];
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void OpenCL_Data::queryAllDevices()

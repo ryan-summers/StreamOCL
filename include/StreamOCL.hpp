@@ -28,6 +28,8 @@
 #include <vector>
 #include <stdio.h>
 #include <stdint.h>
+#include <cstring>
+
 
 typedef enum {
 	INPUT,
@@ -67,7 +69,10 @@ class OpenCL_Data {
 		void queryAllDevices();			//Query information on all available devices on all available platforms 
 		void queryMemoryInfo(); 		//Query Memory Information on the object's deviceID
 		void setPlatformID(int index);	//This will set the platform ID to the index specified
-		void setDeviceID(int index);	//This will set the device ID to the index specified
+		
+		//These functions will return true if they succeed
+		bool setDeviceID(int index);	//This will set the device ID to the index specified
+		bool setDeviceID(char *name);	//This will set the device ID to the device id with the specified name
 
 		int initialize(); 				//This function creates the command queue and context for the specified device ID
 		int start(size_t *globalWorkSize, size_t *localWorkSize, int dimensions, bool blocking = false);					//Start program execution on the device
