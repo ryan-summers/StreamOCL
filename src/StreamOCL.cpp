@@ -427,7 +427,7 @@ int OpenCL_Data::setProgram(string kernelFileName, string functionName)
 		else
 		{
 			//build the program from the source
-			err_code = clBuildProgram(this->program, 1, &(this->deviceID), "", NULL, NULL);
+			err_code = clBuildProgram(this->program, 1, &(this->deviceID), "-g", NULL, NULL);
 			if (err_code != CL_SUCCESS) {
 				cout << "Error. Could not build program. CL Error: " << err_code << endl;
 				size_t length = 0;
@@ -627,6 +627,9 @@ OpenCL_Argument OpenCL_Data::getKernelArgument(int argIndex)
 //This function will write all data from arguments into the cl_mem objects
 int OpenCL_Data::writeBuffers()
 {
+
+	cl_event write;
+
 	struct timespec start, finish, tmp;
 	clock_gettime(CLOCK_BOOTTIME, &start);
 
@@ -639,7 +642,7 @@ int OpenCL_Data::writeBuffers()
 		if (this->arguments.at(i).memType == GLOBAL && this->arguments.at(i).io != OUTPUT)
 		{
 			clock_gettime(CLOCK_BOOTTIME, &tmp);
-			ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
+			ret = clEnqueueWriteBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, &write);
 			if (ret != CL_SUCCESS)
 			{
 				cout << "Error. Failed to enqueue write of argument " << i <<". CL Error: " << ret << endl;
@@ -647,6 +650,7 @@ int OpenCL_Data::writeBuffers()
 			} 
 			else if (printTimeInfo)
 			{
+				clWaitForEvents(1, &write); //Wait for the write to complete for timing characteristics
 				clock_gettime(CLOCK_BOOTTIME, &finish);
 				cout << "Write of buffer[" << i << "] took: " << finish.tv_sec - tmp.tv_sec + (finish.tv_nsec - tmp.tv_nsec)/1000000000.0 << " seconds." << endl;
 			}
@@ -661,6 +665,8 @@ int OpenCL_Data::writeBuffers()
 //This will read results from the device into any buffer objects that have OUTPUT or INOUT status
 int OpenCL_Data::readResults()
 {
+	cl_event read;
+
 	//blocking is used for timing
 	struct timespec start, finish;
 	clock_gettime(CLOCK_BOOTTIME, &start);
@@ -671,12 +677,14 @@ int OpenCL_Data::readResults()
 	{
 		if ((this->arguments.at(i).io == OUTPUT || this->arguments.at(i).io == INOUT) && this->arguments.at(i).memType == GLOBAL)
 		{
-			ret = clEnqueueReadBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, NULL);
+			ret = clEnqueueReadBuffer(this->commandQueue, this->arguments.at(i).buffer, CL_TRUE, 0, this->arguments.at(i).argumentSize, this->arguments.at(i).argument, 0, NULL, &read);
 			if (ret != CL_SUCCESS)
 			{
 				cout << "Error. Could not read result from argument " << i << ". CL Error: " << ret << endl;
 				retVal = 0;
 			}
+			else if (printTimeInfo)
+				clWaitForEvents(1, &read);
 		}
 	}
 	clock_gettime(CLOCK_BOOTTIME, &finish);
@@ -773,6 +781,7 @@ int OpenCL_Data::start(size_t *globalWorkSize, size_t *localWorkSize, int dimens
 {
 	struct timespec finish, start;
 
+	cl_event execution;
 
 	int retVal = this->initializeBuffers();
 	if (retVal)
@@ -782,7 +791,7 @@ int OpenCL_Data::start(size_t *globalWorkSize, size_t *localWorkSize, int dimens
 	
 	cl_int ret;
 	if (retVal)
-		ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, dimensions, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
+		ret = clEnqueueNDRangeKernel(this->commandQueue, this->kernel, dimensions, NULL, globalWorkSize, localWorkSize, 0, NULL, &execution);
 	if (ret != CL_SUCCESS)
 	{
 		retVal = 0;
@@ -790,14 +799,16 @@ int OpenCL_Data::start(size_t *globalWorkSize, size_t *localWorkSize, int dimens
 		if (ret == -5)
 			cout << "Potentially too much local memory was used. Local memory usage: " << localMemorySize << endl;
 	}
+
+	if (blocking)
+		clWaitForEvents(1, &execution);
+	
 	clock_gettime(CLOCK_BOOTTIME, &finish);
 	if (printTimeInfo && blocking)
 		cout << "Kernel execution took: " << finish.tv_sec - start.tv_sec + (finish.tv_nsec - start.tv_nsec)/1000000000.0 << " seconds." << endl;
-	else if(!blocking)
+	else if(!blocking && printTimeInfo)
 		cout << "Kernel execution time could not be determined. Please specify kernel as blocking." << endl;
-
-	if (blocking)
-		clFinish(this->commandQueue);
+	
 	return retVal;
 }
 
