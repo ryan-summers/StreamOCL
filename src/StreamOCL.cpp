@@ -382,7 +382,7 @@ int OpenCL_Data::initialize()
 }
 
 //Configure the device program from the specified kernelFile and the functionName
-int OpenCL_Data::setProgram(string kernelFileName, string functionName)
+int OpenCL_Data::setProgram(string kernelFileName, string functionName, bool debug)
 {
 	struct timespec start, finish;
 	
@@ -427,7 +427,12 @@ int OpenCL_Data::setProgram(string kernelFileName, string functionName)
 		else
 		{
 			//build the program from the source
-			err_code = clBuildProgram(this->program, 1, &(this->deviceID), "-g", NULL, NULL);
+			if (debug)
+				err_code = clBuildProgram(this->program, 1, &(this->deviceID), "-g", NULL, NULL);
+			else
+				err_code = clBuildProgram(this->program, 1, &(this->deviceID), "", NULL, NULL);
+
+
 			if (err_code != CL_SUCCESS) {
 				cout << "Error. Could not build program. CL Error: " << err_code << endl;
 				size_t length = 0;

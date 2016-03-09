@@ -77,7 +77,7 @@ class OpenCL_Data {
 		int initialize(); 				//This function creates the command queue and context for the specified device ID
 		int start(size_t *globalWorkSize, size_t *localWorkSize, int dimensions, bool blocking = false);					//Start program execution on the device
 										//This will also create all buffers on the device for use.
-		int setProgram(string kernelFileName, string functionName); //This function will set the openCL program from the file specified
+		int setProgram(string kernelFileName, string functionName, bool debug); //This function will set the openCL program from the file specified
 		void setKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType); //Set a Kernel Argument
 		void setKernelArgument(OpenCL_Argument arg); 	//Set the Argument specified by Index
 		void updateKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType);	//Update the Argument specified by argIndex
