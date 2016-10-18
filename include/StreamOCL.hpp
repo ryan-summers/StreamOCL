@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <cstring>
+#include <sys/time.h>
+#include <stdlib.h>
 
 
 typedef enum {
@@ -83,6 +85,7 @@ class OpenCL_Data {
 		void updateKernelArgument(int argIndex, void *argument, size_t argumentSize, OpenCL_IO io, OpenCL_MemType memType);	//Update the Argument specified by argIndex
 		void updateKernelArgument(OpenCL_Argument arg);		//Update the Argument specified by Index
 		void removeKernelArgument(int argIndex);			//remove the specified Argument
+        void clearKernelArguments(); //Clear all kernel arguments.
 		OpenCL_Argument getKernelArgument(int argIndex); 	//Get the specified Argument
 		int writeBuffers();			//Write all Kernel Argument Buffers to the device
 		int readResults();				//Read results from the GPU into the specified IO buffer

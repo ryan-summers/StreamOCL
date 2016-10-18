@@ -504,6 +504,11 @@ void OpenCL_Data::setKernelArgument(int argIndex, void *argument, size_t argumen
 	}
 }
 
+void OpenCL_Data::clearKernelArguments()
+{
+    this->arguments.clear();
+}
+
 //This will set a kernel argument with the specified argument parameter if it does not already exist
 void OpenCL_Data::setKernelArgument(OpenCL_Argument argument)
 {
