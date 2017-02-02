@@ -41,6 +41,7 @@ OpenCL_Data::OpenCL_Data(OpenCL_Data &data)
 	this->commandQueue = data.commandQueue;
 	this->program = data.program;
 	this->kernel = data.kernel;
+    this->printTimeInfo = data.printTimeInfo;
 }
 
 //Default destructor for the OpenCL_Data class
@@ -827,5 +828,13 @@ uint64_t OpenCL_Data::getMaximumMemorySize()		//Get the maximum memory size of t
 	char buffer[256];
 	size_t buffer_used;
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(buffer), buffer, &buffer_used);
+	return ((uint64_t)(((cl_ulong *)buffer)[0]));
+}
+
+uint64_t OpenCL_Data::getMaximumLocalMemorySize()		//Get the maximum memory size of the openCL device	
+{
+	char buffer[256];
+	size_t buffer_used;
+	clGetDeviceInfo(this->deviceID, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
 	return ((uint64_t)(((cl_ulong *)buffer)[0]));
 }

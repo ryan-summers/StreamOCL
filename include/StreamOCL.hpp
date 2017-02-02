@@ -16,9 +16,8 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-
-
+#ifndef STREAMOCL_H
+#define STREAMOCL_H
 
 //This is the class definition of OpenCL_Support.
 //This class provides easy functionality and managing of OpenCL Parameters.
@@ -91,6 +90,7 @@ class OpenCL_Data {
 		int readResults();				//Read results from the GPU into the specified IO buffer
 		int initializeBuffers();		//Initialize the OpenCL Buffers specified by Arguments
 		uint64_t getMaximumMemorySize();		//Get the maximum memory size of the openCL device	
+		uint64_t getMaximumLocalMemorySize();		//Get the maximum local memory size of the openCL device	
 	private:
 
 		//OpenCL Specific Members
@@ -106,3 +106,4 @@ class OpenCL_Data {
 		//Members to expand upon class functionality
 		vector<OpenCL_Argument> arguments; //Vector of Argument Parameters to store argument information
 };
+#endif //STREAMOCL_H
