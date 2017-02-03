@@ -91,6 +91,7 @@ class OpenCL_Data {
 		int initializeBuffers();		//Initialize the OpenCL Buffers specified by Arguments
 		uint64_t getMaximumMemorySize();		//Get the maximum memory size of the openCL device	
 		uint64_t getMaximumLocalMemorySize();		//Get the maximum local memory size of the openCL device	
+        size_t getMaximumGroupSize();
 	private:
 
 		//OpenCL Specific Members

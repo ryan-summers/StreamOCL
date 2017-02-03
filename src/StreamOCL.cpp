@@ -838,3 +838,11 @@ uint64_t OpenCL_Data::getMaximumLocalMemorySize()		//Get the maximum memory size
 	clGetDeviceInfo(this->deviceID, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(buffer), buffer, &buffer_used);
 	return ((uint64_t)(((cl_ulong *)buffer)[0]));
 }
+
+size_t OpenCL_Data::getMaximumGroupSize()
+{
+	char buffer[256];
+	size_t buffer_used;
+	clGetDeviceInfo(this->deviceID, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(buffer), buffer, &buffer_used);
+    return ((size_t *)buffer)[0];
+}
